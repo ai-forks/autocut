@@ -114,6 +114,9 @@ class Transcribe:
         subs = self.whisper_model.gen_srt(transcribe_results)
         with open(output, "wb") as f:
             f.write(srt.compose(subs).encode(self.args.encoding, "replace"))
+        subs = self.whisper_model.gen_srt(transcribe_results)
+        with open(output.replace(".srt", "_.srt"), "wb") as f:
+            f.write(srt.compose(subs).encode(self.args.encoding, "replace"))
 
     def _save_md(self, md_fn, srt_fn, video_fn):
         with open(srt_fn, encoding=self.args.encoding) as f:
