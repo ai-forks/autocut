@@ -35,7 +35,7 @@ class AbstractWhisperModel(ABC):
         pass
 
     @abstractmethod
-    def gen_srt(self, transcribe_results: List[Any]) -> List[srt.Subtitle]:
+    def gen_srt(self, transcribe_results: List[Any], has_empty=True) -> List[srt.Subtitle]:
         pass
 
 
@@ -118,7 +118,7 @@ class WhisperModel(AbstractWhisperModel):
                 res.append(r)
         return res
 
-    def gen_srt(self, transcribe_results):
+    def gen_srt(self, transcribe_results, has_empty=True):
         subs = []
 
         def _add_sub(start, end, text):
@@ -144,7 +144,8 @@ class WhisperModel(AbstractWhisperModel):
                     continue
                 # mark any empty segment that is not very short
                 if start > prev_end + 1.0:
-                    _add_sub(prev_end, start, "< No Speech >")
+                    if has_empty :
+                        _add_sub(prev_end, start, "< No Speech >")
                 _add_sub(start, end, s["text"])
                 prev_end = end
 
@@ -285,7 +286,7 @@ class OpenAIModel(AbstractWhisperModel):
             )
         )
 
-    def gen_srt(self, transcribe_results: List[srt.Subtitle]):
+    def gen_srt(self, transcribe_results: List[srt.Subtitle], has_empty=True):
         if len(transcribe_results) == 0:
             return []
         if len(transcribe_results) == 1:
@@ -293,13 +294,14 @@ class OpenAIModel(AbstractWhisperModel):
         subs = [transcribe_results[0]]
         for subtitle in transcribe_results[1:]:
             if subtitle.start - subs[-1].end > datetime.timedelta(seconds=1):
-                subs.append(
-                    srt.Subtitle(
-                        index=0,
-                        start=subs[-1].end,
-                        end=subtitle.start,
-                        content="< No Speech >",
+                if has_empty:
+                    subs.append(
+                        srt.Subtitle(
+                            index=0,
+                            start=subs[-1].end,
+                            end=subtitle.start,
+                            content="< No Speech >",
+                        )
                     )
-                )
             subs.append(subtitle)
         return subs
