@@ -57,9 +57,18 @@ class Transcribe:
         if self.vad_model is None or self.detect_speech is None:
             # torch load limit https://github.com/pytorch/vision/issues/4156
             torch.hub._validate_not_a_forked_repo = lambda a, b, c: True
-            self.vad_model, funcs = torch.hub.load(
+            """ self.vad_model, funcs = torch.hub.load(
                 repo_or_dir="snakers4/silero-vad", model="silero_vad", trust_repo=True
+            ) """
+            local_silero = "/root/.cache/torch/hub/snakers4_silero-vad_master/"
+            exist_local_model = os.path.exists(local_silero)
+            self.vad_model, funcs = torch.hub.load(
+                repo_or_dir=local_silero if exist_local_model else "snakers4/silero-vad", 
+                model="silero_vad", 
+                trust_repo="check" if exist_local_model else True, 
+                source="local" if exist_local_model else "github"
             )
+            logging.info(f"===>load voice model[snakers4/silero-vad] ok {funcs}")
 
             self.detect_speech = funcs[0]
 
