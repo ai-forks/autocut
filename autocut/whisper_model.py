@@ -38,6 +38,9 @@ class AbstractWhisperModel(ABC):
     def gen_srt(self, transcribe_results: List[Any], has_empty=True) -> List[srt.Subtitle]:
         pass
 
+    @abstractmethod
+    def gen_txt(self, transcribe_results: List[Any]) -> List[str]:
+        pass
 
 class WhisperModel(AbstractWhisperModel):
     def __init__(self, sample_rate=16000):
@@ -146,12 +149,38 @@ class WhisperModel(AbstractWhisperModel):
                 if start > prev_end + 1.0:
                     if has_empty :
                         _add_sub(prev_end, start, "< No Speech >")
+                    else :
+                        continue
                 _add_sub(start, end, s["text"])
                 prev_end = end
 
         return subs
 
+    def gen_txt(self, transcribe_results):
+        subs = []
 
+        def _add_sub(text):
+            subs.append(text)
+
+        prev_end = 0
+        for r in transcribe_results:
+            origin = r["origin_timestamp"]
+            for s in r["segments"]:
+                start = s["start"] + origin["start"] / self.sample_rate
+                end = min(
+                    s["end"] + origin["start"] / self.sample_rate,
+                    origin["end"] / self.sample_rate,
+                )
+                if start > end or s["text"] == None or len(s["text"])<5 :
+                    continue
+                # mark any empty segment that is not very short
+                if start > prev_end + 1.0:
+                    if has_empty :
+                        continue
+                _add_sub(s["text"])
+                prev_end = end
+
+        return subs
 class OpenAIModel(AbstractWhisperModel):
     max_single_audio_bytes = 25 * 2**20  # 25MB
     split_audio_bytes = 23 * 2**20  # 23MB, 2MB for safety(header, etc.)
@@ -303,5 +332,21 @@ class OpenAIModel(AbstractWhisperModel):
                             content="< No Speech >",
                         )
                     )
+                else :
+                    continue
             subs.append(subtitle)
         return subs
+
+    def gen_txt(self, transcribe_results: List[srt.Subtitle]):
+        if len(transcribe_results) == 0:
+            return []
+        if len(transcribe_results) == 1:
+            return transcribe_results
+        subs = [transcribe_results[0]]
+        for subtitle in transcribe_results[1:]:
+            if subtitle.start - subs[-1].end > datetime.timedelta(seconds=1):
+                if has_empty:
+                    continue
+            subs.append(subtitle.text)
+        return subs
+    

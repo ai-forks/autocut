@@ -47,6 +47,9 @@ class Transcribe:
             logging.info(f"Transcribed {input} to {output}")
             self._save_md(name + ".md", output, input)
             logging.info(f'Saved texts to {name + ".md"} to mark sentences')
+            self._save_txt(name+".txt", transcribe_results)
+            logging.info(f'Saved texts to {name + ".txt"}')
+
 
     def _detect_voice_activity(self, audio) -> List[SPEECH_ARRAY_INDEX]:
         """Detect segments that have voice activities"""
@@ -114,8 +117,13 @@ class Transcribe:
         subs = self.whisper_model.gen_srt(transcribe_results)
         with open(output, "wb") as f:
             f.write(srt.compose(subs).encode(self.args.encoding, "replace"))
-        subs = self.whisper_model.gen_srt(transcribe_results)
+        subs = self.whisper_model.gen_srt(transcribe_results, has_empty=False)
         with open(output.replace(".srt", "_.srt"), "wb") as f:
+            f.write(srt.compose(subs).encode(self.args.encoding, "replace"))
+        
+    def _save_txt(self, output, transcribe_results):
+        subs = self.whisper_model.gen_txt(transcribe_results)
+        with open(output, "wb") as f:
             f.write(srt.compose(subs).encode(self.args.encoding, "replace"))
 
     def _save_md(self, md_fn, srt_fn, video_fn):
