@@ -174,7 +174,7 @@ class WhisperModel(AbstractWhisperModel):
                     continue
 
             
-                if "text" in s and len(s["text"]) > 5:
+                if "text" in s and len(s["text"]) > 1:
                     _add_sub(s["text"])
                         
                 prev_end = end
@@ -345,7 +345,7 @@ class OpenAIModel(AbstractWhisperModel):
         for subtitle in transcribe_results[1:]:
             if subtitle.start - subs[-1].end > datetime.timedelta(seconds=1):
                 continue
-            if 'text' not in subtitle or len(subtitle.text) < 5 :
+            if 'text' not in subtitle or len(subtitle.text) < 2 :
                 continue
             subs.append(subtitle.text)
         return subs
