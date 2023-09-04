@@ -149,8 +149,7 @@ class WhisperModel(AbstractWhisperModel):
                 if start > prev_end + 1.0:
                     if has_empty :
                         _add_sub(prev_end, start, "< No Speech >")
-                    else :
-                        continue
+                    
                 _add_sub(start, end, s["text"])
                 prev_end = end
 
@@ -160,7 +159,7 @@ class WhisperModel(AbstractWhisperModel):
         subs = []
 
         def _add_sub(text):
-            subs.append(text)
+            subs.append(cc.convert(text.strip()))
 
         prev_end = 0
         for r in transcribe_results:
@@ -171,18 +170,17 @@ class WhisperModel(AbstractWhisperModel):
                     s["end"] + origin["start"] / self.sample_rate,
                     origin["end"] / self.sample_rate,
                 )
-                if start > end :
+                if start > end:
                     continue
-                
                 # mark any empty segment that is not very short
-                if start > prev_end + 1.0:
-                    continue
-                if "text" not in s or len(s["text"]) < 5:
-                    continue
-                _add_sub(s["text"])
+                if start < prev_end + 1.0:
+                    if "text" in s and len(s["text"]) > 5:
+                        _add_sub(start, end, s["text"])
+                        
                 prev_end = end
 
         return subs
+
 class OpenAIModel(AbstractWhisperModel):
     max_single_audio_bytes = 25 * 2**20  # 25MB
     split_audio_bytes = 23 * 2**20  # 23MB, 2MB for safety(header, etc.)
@@ -334,8 +332,7 @@ class OpenAIModel(AbstractWhisperModel):
                             content="< No Speech >",
                         )
                     )
-                else :
-                    continue
+               
             subs.append(subtitle)
         return subs
 
