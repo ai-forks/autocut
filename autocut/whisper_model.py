@@ -175,7 +175,7 @@ class WhisperModel(AbstractWhisperModel):
 
             
                 if "text" in s and len(s["text"]) > 5:
-                    _add_sub(start, end, s["text"])
+                    _add_sub(s["text"])
                         
                 prev_end = end
 
