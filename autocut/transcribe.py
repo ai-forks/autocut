@@ -123,7 +123,6 @@ class Transcribe:
         
     def _save_txt(self, output, transcribe_results):
         subs = self.whisper_model.gen_txt(transcribe_results)
-        print(f"====>{subs}")
         with open(output, "wb") as f:
             f.write("\r\n".join(subs).encode("utf8"))
             
