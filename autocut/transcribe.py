@@ -123,8 +123,9 @@ class Transcribe:
         
     def _save_txt(self, output, transcribe_results):
         subs = self.whisper_model.gen_txt(transcribe_results)
+        print(f"====>{subs}")
         with open(output, "wb") as f:
-            f.write(srt.compose(subs).encode(self.args.encoding, "replace"))
+            f.write("\r\n".join(subs))
 
     def _save_md(self, md_fn, srt_fn, video_fn):
         with open(srt_fn, encoding=self.args.encoding) as f:
