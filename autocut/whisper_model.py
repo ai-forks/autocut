@@ -172,7 +172,7 @@ class WhisperModel(AbstractWhisperModel):
                 )
                 if start > end:
                     continue
-                # mark any empty segment that is not very short
+
                 if start < prev_end + 1.0:
                     if "text" in s and len(s["text"]) > 5:
                         _add_sub(start, end, s["text"])
