@@ -171,12 +171,14 @@ class WhisperModel(AbstractWhisperModel):
                     s["end"] + origin["start"] / self.sample_rate,
                     origin["end"] / self.sample_rate,
                 )
-                if start > end or s["text"] == None or len(s["text"])<5 :
+                if start > end :
                     continue
+                
                 # mark any empty segment that is not very short
                 if start > prev_end + 1.0:
-                    if has_empty :
-                        continue
+                    continue
+                if "text" not in s or len(s["text"]) < 5:
+                    continue
                 _add_sub(s["text"])
                 prev_end = end
 
@@ -345,8 +347,9 @@ class OpenAIModel(AbstractWhisperModel):
         subs = [transcribe_results[0]]
         for subtitle in transcribe_results[1:]:
             if subtitle.start - subs[-1].end > datetime.timedelta(seconds=1):
-                if has_empty:
-                    continue
+                continue
+            if 'text' not in subtitle or len(subtitle.text) < 5 :
+                continue
             subs.append(subtitle.text)
         return subs
     
